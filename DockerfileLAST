@@ -1,0 +1,61 @@
+FROM rocker/rstudio:4.2.0
+# Install required system packages
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk \
+    wget \
+    unzip \
+    python3 \
+    python-is-python3 \
+    python3-pip \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    samtools \
+    bwa \
+    parallel \
+    bcftools \
+    curl \
+    git \
+    zlib1g-dev \
+    build-essential
+# Install pysam for Python
+RUN pip3 install pysam numpy matplotlib seaborn pandas
+# Install required R packages
+RUN R -e "install.packages(c('logging', 'cowplot', 'kableExtra', 'class', 'e1071', 'mcr', 'MuMIn', 'argparse'))"
+# Install BBMap
+RUN cd /opt && \
+    wget https://sourceforge.net/projects/bbmap/files/BBMap_38.94.tar.gz && \
+    tar -xzf BBMap_38.94.tar.gz && \
+    rm BBMap_38.94.tar.gz && \
+    chmod -R +x /opt/bbmap
+# Install LAST aligner from GitLab
+RUN cd /opt && \
+    git clone https://gitlab.com/mcfrith/last.git && \
+    cd last && \
+    make && \
+    make install && \
+    cd .. 
+# Install GATK and Picard
+RUN mkdir -p /opt/tools && \
+    cd /opt/tools && \
+    wget https://github.com/broadinstitute/gatk/releases/download/4.3.0.0/gatk-4.3.0.0.zip && \
+    unzip gatk-4.3.0.0.zip && \
+    rm gatk-4.3.0.0.zip && \
+    wget https://github.com/broadinstitute/picard/releases/download/2.27.5/picard.jar
+# Extract only chromosome 7 to save memory
+RUN mkdir -p /opt/ref && \
+    cd /opt/ref && \
+    wget https://hgdownload.cse.ucsc.edu/goldenpath/hg19/chromosomes/chr7.fa.gz && \
+    gunzip chr7.fa.gz && \
+    echo ">chr7" > hg19_chr7.fa && \
+    grep -v "^>" chr7.fa >> hg19_chr7.fa && \
+    rm chr7.fa && \
+    samtools faidx hg19_chr7.fa && \
+    java -jar /opt/tools/picard.jar CreateSequenceDictionary R=hg19_chr7.fa O=hg19_chr7.dict && \
+    bwa index hg19_chr7.fa
+# Add BBMap to the path
+ENV PATH="/opt/bbmap:${PATH}"
+ENV PATH="/opt/tools/gatk-4.3.0.0:${PATH}"
+ENV PICARD_JAR="/opt/tools/picard.jar"
+ENV REF_GENOME="/opt/ref/hg19_chr7.fa"
+# Add LAST to the path
+ENV PATH="/usr/local/bin:${PATH}"
