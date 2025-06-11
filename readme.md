@@ -89,11 +89,15 @@ done
 
 ### Step 5: CNV Analysis
 ```bash
+mkdir -p $WORKDIR/formatted_results
+
 Rscript PMS2_CNV_analysis_Last.R \
-    --coverage_file $WORKDIR/analysis/combined_coverage.sample_interval_summary \
-    --hsmetrics_list $WORKDIR/analysis/hsmetrics_list.txt \
-    --output_dir $WORKDIR/formatted_results \
+    $WORKDIR/analysis/combined_coverage.sample_interval_summary \
+    $WORKDIR/pms2_targets.bed \
+    $WORKDIR/analysis/hsmetrics_list.txt \
+    $WORKDIR/formatted_results/result.csv \
     --known_positives $WORKDIR/known_positives.txt
+# note: --known_positives is optional
 ```
 
 ## Output
