@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y \
 # Install pysam for Python
 RUN pip3 install pysam numpy matplotlib seaborn pandas
 # Install required R packages
-RUN R -e "install.packages(c('logging', 'cowplot', 'kableExtra', 'class', 'e1071', 'mcr', 'MuMIn', 'argparse'))"
+RUN R -e "install.packages(c('logging', 'cowplot', 'kableExtra', 'class', 'e1071', 'mcr', 'MuMIn', 'argparse', 'data.table'))"
 # Install BBMap
 RUN cd /opt && \
     wget https://sourceforge.net/projects/bbmap/files/BBMap_38.94.tar.gz && \
