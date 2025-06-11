@@ -45,13 +45,14 @@ This pipeline implements the methodology described in Herman et al. 2018 for det
 ### Step 2: Calculate Read Depth
 ```bash
 # Create analysis directory and run GATK DepthOfCoverage
-mkdir -p ~/data/analysis
-find ~/data/fastq/aligned_last -name "*.sorted.bam" > ~/data/analysis/all_bams.list
+WORKDIR="/home/rstudio/data"
+mkdir -p $WORKDIR/analysis
+find $WORKDIR/fastq/aligned_last -name "*.sorted.bam" > $WORKDIR/analysis/all_bams.list
 gatk --java-options "-Xmx8g" DepthOfCoverage \
     -R $REF_GENOME \
-    -I ~/data/analysis/all_bams.list \
-    -L ~/data/pms2_targets.bed \
-    -O ~/data/analysis/combined_coverage \
+    -I $WORKDIR/analysis/all_bams.list \
+    -L $WORKDIR/pms2_targets.bed \
+    -O $WORKDIR/analysis/combined_coverage \
     --omit-depth-output-at-each-base \
     --include-ref-n-sites
 ```
@@ -59,40 +60,40 @@ gatk --java-options "-Xmx8g" DepthOfCoverage \
 ### Step 3: Create Interval List
 ```bash
 # Create interval list for Picard
-samtools view -H ~/data/fastq/aligned_last/$(ls ~/data/fastq/aligned_last | head -1)/$(ls ~/data/fastq/aligned_last | head -1).sorted.bam | grep '@SQ' > header.txt
+samtools view -H $WORKDIR/fastq/aligned_last/$(ls $WORKDIR/fastq/aligned_last | head -1)/$(ls $WORKDIR/fastq/aligned_last | head -1).sorted.bam | grep '@SQ' > header.txt
 echo '@HD	VN:1.6	SO:coordinate' | cat - header.txt > interval_list_header.txt
-awk 'BEGIN {OFS="\t"} {print $1,$2+1,$3,"+","TARGET_" NR}' ~/data/pms2_targets.bed > intervals.txt
-cat interval_list_header.txt intervals.txt > ~/data/pms2_targets.interval_list
+awk 'BEGIN {OFS="\t"} {print $1,$2+1,$3,"+","TARGET_" NR}' $WORKDIR/pms2_targets.bed > intervals.txt
+cat interval_list_header.txt intervals.txt > $WORKDIR/pms2_targets.interval_list
 rm header.txt interval_list_header.txt intervals.txt
 ```
 
 ### Step 4: Run Picard HsMetrics
 ```bash
 # Calculate hybridization selection metrics
-mkdir -p ~/data/analysis/hsmetrics
-> ~/data/analysis/hsmetrics_list.txt
+mkdir -p $WORKDIR/analysis/hsmetrics
+> $WORKDIR/analysis/hsmetrics_list.txt
 
-for bam in $(find ~/data/fastq/aligned_last -name "*.sorted.bam"); do
+for bam in $(find $WORKDIR/fastq/aligned_last -name "*.sorted.bam"); do
     sample=$(basename $(dirname $bam))
     echo "Processing ${sample}..."
     java -jar $PICARD_JAR CollectHsMetrics \
         I=$bam \
-        O=~/data/analysis/hsmetrics/${sample}.hsmetrics.txt \
+        O=$WORKDIR/analysis/hsmetrics/${sample}.hsmetrics.txt \
         R=$REF_GENOME \
-        BAIT_INTERVALS=~/data/pms2_targets.interval_list \
-        TARGET_INTERVALS=~/data/pms2_targets.interval_list \
+        BAIT_INTERVALS=$WORKDIR/pms2_targets.interval_list \
+        TARGET_INTERVALS=$WORKDIR/pms2_targets.interval_list \
         VALIDATION_STRINGENCY=LENIENT
-    echo "~/data/analysis/hsmetrics/${sample}.hsmetrics.txt" >> ~/data/analysis/hsmetrics_list.txt
+    echo "$WORKDIR/analysis/hsmetrics/${sample}.hsmetrics.txt" >> $WORKDIR/analysis/hsmetrics_list.txt
 done
 ```
 
 ### Step 5: CNV Analysis
 ```bash
 Rscript PMS2_CNV_analysis_Last.R \
-    --coverage_file ~/data/analysis/combined_coverage.sample_interval_summary \
-    --hsmetrics_list ~/data/analysis/hsmetrics_list.txt \
-    --output_dir ~/data/formatted_results \
-    --known_positives ~/data/known_positives.txt
+    --coverage_file $WORKDIR/analysis/combined_coverage.sample_interval_summary \
+    --hsmetrics_list $WORKDIR/analysis/hsmetrics_list.txt \
+    --output_dir $WORKDIR/formatted_results \
+    --known_positives $WORKDIR/known_positives.txt
 ```
 
 ## Output
