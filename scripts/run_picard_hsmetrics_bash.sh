@@ -1,10 +1,12 @@
+WORKDIR="/home/rstudio/data"
+
 # Create a directory for results
-mkdir -p ~/data/analysis/hsmetrics
+mkdir -p $WORKDIR/analysis/hsmetrics
 
 # Create a file that will contain paths to all HsMetrics results
-> ~/data/analysis/hsmetrics_list.txt
+> $WORKDIR/analysis/hsmetrics_list.txt
 
-for bam in $(find ~/data/fastq/aligned_last -name "*.sorted.bam"); do
+for bam in $(find $WORKDIR/fastq/aligned_last -name "*.sorted.bam"); do
     sample=$(basename $(dirname $bam))
     
     echo "Processing ${sample}..."
@@ -12,12 +14,12 @@ for bam in $(find ~/data/fastq/aligned_last -name "*.sorted.bam"); do
     # Run Picard HsMetrics with the hybrid reference
     java -jar $PICARD_JAR CollectHsMetrics \
         I=$bam \
-        O=~/data/analysis/hsmetrics/${sample}.hsmetrics.txt \
+        O=$WORKDIR/analysis/hsmetrics/${sample}.hsmetrics.txt \
         R=$REF_GENOME \
-        BAIT_INTERVALS=~/data/pms2_targets.interval_list \
-        TARGET_INTERVALS=~/data/pms2_targets.interval_list \
+        BAIT_INTERVALS=$WORKDIR/pms2_targets.interval_list \
+        TARGET_INTERVALS=$WORKDIR/pms2_targets.interval_list \
         VALIDATION_STRINGENCY=LENIENT
     
     # Add path to list file
-    echo "~/data/analysis/hsmetrics/${sample}.hsmetrics.txt" >> ~/data/analysis/hsmetrics_list.txt
+    echo "$WORKDIR/analysis/hsmetrics/${sample}.hsmetrics.txt" >> $WORKDIR/analysis/hsmetrics_list.txt
 done
