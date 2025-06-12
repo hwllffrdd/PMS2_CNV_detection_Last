@@ -44,7 +44,6 @@ This pipeline implements the methodology described in Herman et al. 2018 for det
 
 ### Step 2: Calculate Read Depth
 ```bash
-# Create analysis directory and run GATK DepthOfCoverage
 WORKDIR="/home/rstudio/data"
 mkdir -p $WORKDIR/analysis
 find $WORKDIR/fastq/aligned_last -name "*.sorted.bam" > $WORKDIR/analysis/all_bams.list
@@ -59,7 +58,6 @@ gatk --java-options "-Xmx8g" DepthOfCoverage \
 
 ### Step 3: Create Interval List
 ```bash
-# Create interval list for Picard
 samtools view -H $WORKDIR/fastq/aligned_last/$(ls $WORKDIR/fastq/aligned_last | head -1)/$(ls $WORKDIR/fastq/aligned_last | head -1).sorted.bam | grep '@SQ' > header.txt
 echo '@HD	VN:1.6	SO:coordinate' | cat - header.txt > interval_list_header.txt
 awk 'BEGIN {OFS="\t"} {print $1,$2+1,$3,"+","TARGET_" NR}' $WORKDIR/pms2_targets.bed > intervals.txt
@@ -69,7 +67,6 @@ rm header.txt interval_list_header.txt intervals.txt
 
 ### Step 4: Run Picard HsMetrics
 ```bash
-# Calculate hybridization selection metrics
 mkdir -p $WORKDIR/analysis/hsmetrics
 > $WORKDIR/analysis/hsmetrics_list.txt
 
@@ -111,16 +108,9 @@ Results are generated in the `formatted_results/` directory:
 ## Target Regions
 
 The pipeline analyzes 38 target regions:
-- 23 regions in PMS2 (exons 8-15 and surrounding introns)
-- 15 homologous regions in PMS2CL
+- 8 regions in PMS2 (exons 8-15)
+- 6 homologous regions in PMS2CL
 - Based on coordinates from Herman et al. 2018 (Table 1)
-
-## Performance
-
-- Processes 48-64 samples in approximately 2-4 hours
-- Detects single-copy deletions and duplications
-- ~5% false-positive rate requiring manual review
-- 100% sensitivity for known CNVs in validation sets
 
 ## References
 
