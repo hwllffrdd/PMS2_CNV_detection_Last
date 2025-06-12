@@ -106,3 +106,7 @@ else
         process_sample "$r1_file"
     done
 fi
+
+echo "Cleaning up reference database..."
+rm -rf "$db_dir"
+echo "Database cleanup complete."
